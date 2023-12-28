@@ -8,9 +8,9 @@ export const errorHandling = (err: any, req: Request, res: Response, next: NextF
     return res.status(err.status).json(omit(err, ['status']))
   }
 
-  // Object.getOwnPropertyNames(err).forEach((key) => {
-  //   Object.defineProperty(err, key, { enumerable: true })
-  // })
+  Object.getOwnPropertyNames(err).forEach((key) => {
+    Object.defineProperty(err, key, { enumerable: true })
+  })
 
   return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
     message: err

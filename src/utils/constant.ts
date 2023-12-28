@@ -1,8 +1,17 @@
 export const MESSAGES = {
   USER_NOT_FOUND: 'User not found',
+  NAME_IS_REQUIRED: 'Name is required',
   EMAIL_IS_INVALID: 'Email is invalid',
+  EMAIL_ALREADY_EXISTS: 'Email already exists',
+  EMAIL_IS_REQUIRED: 'Email is required',
+  PASSWORD_LENGTH: 'Password should be at least 8 chars',
+  PASSWORD_IS_REQUIRED: 'Password is required',
+  CONFIRM_PASSWORD_LENGTH: 'Confirm password should be at least 8 chars',
+  CONFIRM_PASSWORD_IS_REQUIRED: 'Confirm password is required',
+  PASSWORD_CONFIRMPASSWORD_NOT_SAME: 'Confirm password must be same with password',
+  DATE_OF_BIRTH_IS_REQUIRED: 'Date of birth is required',
   UNPROCESSABLE_ENTITY: 'Unprocessable Entity',
-  EMAIL_ALREADY_EXISTS: 'Email already exitsts'
+  AUTHENTICATION_FAILED: 'Authentication failed'
 }
 export const HTTP_STATUS = {
   UNAUTHORIZED: 401,
@@ -18,4 +27,17 @@ export const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,
   GATEWAY_TIMEOUT: 504
+}
+
+export enum UserVerifyStatusType {
+  Unverified,
+  Verified,
+  Banned
+}
+
+export enum TokenType {
+  AccessToken,
+  RefreshToken,
+  ForgotPasswordToken,
+  EmailVerifyToken
 }

@@ -1,5 +1,5 @@
 import { ValidationChain, validationResult } from 'express-validator'
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction, RequestHandler } from 'express'
 import { RunnableValidationChains } from 'express-validator/src/middlewares/schema'
 import { ErrorStatus, UnprocessableEntityErrorStatus } from '~/models/error-status'
 
@@ -8,6 +8,7 @@ export const validate = (schema: RunnableValidationChains<ValidationChain>) => {
     await schema.run(req)
     const errors = validationResult(req)
     const errorsMapped = errors.mapped()
+    console.log(errors)
     if (errors.isEmpty()) {
       return next()
     }
@@ -22,5 +23,15 @@ export const validate = (schema: RunnableValidationChains<ValidationChain>) => {
       uEntityError.errors[key] = errorsMapped[key]
     }
     return next(uEntityError)
+  }
+}
+
+export const requestHandler = (func: RequestHandler) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await func(req, res, next)
+    } catch (err) {
+      next(err)
+    }
   }
 }

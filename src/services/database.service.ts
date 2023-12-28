@@ -1,4 +1,5 @@
-import { MongoClient, Db } from 'mongodb'
+import { MongoClient, Db, Collection } from 'mongodb'
+import User from '~/models/schemas/user.schema'
 import '~/utils/dotenv'
 
 const url = `mongodb+srv://${process.env.DB_DATABASE_USERNAME}:${process.env.DB_DATABASE_PASSWORD}@xbackend.wrlhply.mongodb.net/?retryWrites=true&w=majority`
@@ -18,10 +19,10 @@ class DatabaseService {
       throw new Error('Failed to connect to MongoDB: ' + error)
     }
   }
-  get users() {
-    return this.db.collection('users')
+  get users(): Collection<User> {
+    return this.db.collection(process.env.DB_COLLECTION_USERS as string)
   }
 }
 
-const database = new DatabaseService()
-export default database
+const databaseService = new DatabaseService()
+export default databaseService
