@@ -77,6 +77,12 @@ class UserService {
     ])
     return { access_token, refresh_token }
   }
+  async login({ user_id, verify }: { user_id: string; verify: UserVerifyStatusType }) {
+    return {
+      user_id,
+      verify
+    }
+  }
 
   async isEmailExist(email: string) {
     const user = await databaseService.users.findOne({ email })

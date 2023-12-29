@@ -90,9 +90,11 @@ export const loginValidator = validate(
             email: value,
             password: hashPassword(req.body.password)
           })
-          if (user === null) {
+          if (!user) {
             throw new ErrorStatus({ message: MESSAGES.AUTHENTICATION_FAILED, status: HTTP_STATUS.UNAUTHORIZED })
           }
+          req.user = user
+          return true
         }
       }
     },
