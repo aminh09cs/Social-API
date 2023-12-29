@@ -5,7 +5,7 @@ import { RegisterRequestBody } from '~/models/requests/user.request'
 import databaseService from './database.service'
 import User from '~/models/schemas/user.schema'
 import { hashPassword } from '~/utils/crypto'
-import { verify } from 'crypto'
+import RefreshToken from '~/models/schemas/refresh-token.schema'
 
 class UserService {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatusType }) {
@@ -78,15 +78,74 @@ class UserService {
     return { access_token, refresh_token }
   }
   async login({ user_id, verify }: { user_id: string; verify: UserVerifyStatusType }) {
-    return {
-      user_id,
-      verify
-    }
+    const [access_token, refresh_token] = await Promise.all([
+      this.signAccessToken({ user_id: user_id.toString(), verify: verify }),
+      this.signRefreshToken({ user_id: user_id.toString(), verify: verify })
+    ])
+    await databaseService.refresh_tokens.insertOne(
+      new RefreshToken({ user_id: new ObjectId(user_id), token: refresh_token })
+    )
+    return { access_token, refresh_token }
+  }
+
+  async logout({ token }: { token: string }) {
+    await databaseService.refresh_tokens.deleteOne({ token })
   }
 
   async isEmailExist(email: string) {
     const user = await databaseService.users.findOne({ email })
     return Boolean(user)
+  }
+  async verifyEmail({ user_id }: { user_id: string }) {
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          email_verify_token: '',
+          verify: UserVerifyStatusType.Verified
+        },
+        $currentDate: {
+          update: true
+        }
+      }
+    )
+  }
+
+  async resendEmail({ user_id }: { user_id: string }) {
+    const email_verify_token = await this.signEmailVerifyToken({
+      user_id: user_id,
+      verify: UserVerifyStatusType.Unverified
+    })
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          email_verify_token,
+          verify: UserVerifyStatusType.Unverified
+        },
+        $currentDate: {
+          update: true
+        }
+      }
+    )
+  }
+  async forgotPassword(user: User) {
+    const { _id, verify } = user
+    const forgot_password_token = await this.signForgotPasswordToken({
+      user_id: _id?.toString() as string,
+      verify: verify
+    })
+    await databaseService.users.updateOne(
+      { _id: _id },
+      {
+        $set: {
+          forgot_password_token
+        },
+        $currentDate: {
+          update: true
+        }
+      }
+    )
   }
 }
 
