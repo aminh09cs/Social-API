@@ -17,7 +17,8 @@ export const MESSAGES = {
   ACCESS_TOKEN_IS_REQUIRED: 'Access token is required',
   REFRESH_TOKEN_IS_REQUIRED: 'Refresh token is required',
   REFRESH_TOKEN_OR_USER_IS_NOT_EXIST: 'Refresh token is used or not exist',
-  FORGOT_PASSWORD_TOKEN_IS_REQUIRED: 'Forgot password token is required'
+  FORGOT_PASSWORD_TOKEN_IS_REQUIRED: 'Forgot password token is required',
+  FORGOT_PASSWORD_IS_INVALID: 'Forgot password is invalid'
 }
 export const HTTP_STATUS = {
   UNAUTHORIZED: 401,

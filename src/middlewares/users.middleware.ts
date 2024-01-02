@@ -1,7 +1,7 @@
 import databaseService from '~/services/database.service'
 import userService from '~/services/user.service'
 import { hashPassword } from '~/utils/crypto'
-import { checkSchema } from 'express-validator'
+import { check, checkSchema } from 'express-validator'
 import { validate } from '~/utils/support'
 import { HTTP_STATUS, MESSAGES } from '~/utils/constant'
 import { ErrorStatus } from '~/models/error-status'
@@ -246,6 +246,54 @@ export const verifyForgotPasswordValidator = validate(
               })
             }
             return true
+          }
+        }
+      }
+    },
+    ['body']
+  )
+)
+
+export const resetPasswordValidator = validate(
+  checkSchema(
+    {
+      password: {
+        notEmpty: {
+          errorMessage: MESSAGES.PASSWORD_IS_REQUIRED
+        },
+        isLength: {
+          options: { min: 8, max: 250 },
+          errorMessage: MESSAGES.PASSWORD_LENGTH
+        }
+      },
+      confirm_password: {
+        notEmpty: {
+          errorMessage: MESSAGES.PASSWORD_IS_REQUIRED
+        },
+        custom: {
+          options: async (value, { req }) => {
+            if (value !== req.body.password) {
+              throw new Error(MESSAGES.PASSWORD_CONFIRMPASSWORD_NOT_SAME)
+            }
+          }
+        }
+      },
+      forgot_password_token: {
+        custom: {
+          options: async (value, { req }) => {
+            const decoded_forgot_password_token = await verifyToken({
+              token: value,
+              secretKey: process.env.JWT_FORGOT_PASSWORD_TOKEN_KEY as string
+            })
+            const { user_id } = decoded_forgot_password_token
+            const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+            if (user === null) {
+              throw new ErrorStatus({ message: MESSAGES.USER_NOT_FOUND, status: HTTP_STATUS.NOT_FOUND })
+            }
+            if (user.forgot_password_token !== value) {
+              throw new ErrorStatus({ message: MESSAGES.FORGOT_PASSWORD_IS_INVALID, status: HTTP_STATUS.UNAUTHORIZED })
+            }
+            req.decoded_forgot_password_token = decoded_forgot_password_token
           }
         }
       }

@@ -147,6 +147,20 @@ class UserService {
       }
     )
   }
+  async resetPassword({ user_id, password }: { user_id: string; password: string }) {
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          password: hashPassword(password),
+          forgot_password_token: ''
+        },
+        $currentDate: {
+          update: true
+        }
+      }
+    )
+  }
 }
 
 const userService = new UserService()
