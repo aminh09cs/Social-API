@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { TokenType, UserVerifyStatusType } from 'src/utils/constant'
 import { signToken } from 'src/utils/jwt'
-import { RegisterRequestBody } from '~/models/requests/user.request'
+import { RegisterRequestBody, UpdateMeRequestBody } from '~/models/requests/user.request'
 import databaseService from './database.service'
 import User from '~/models/schemas/user.schema'
 import { hashPassword } from '~/utils/crypto'
@@ -105,7 +105,7 @@ class UserService {
           verify: UserVerifyStatusType.Verified
         },
         $currentDate: {
-          update: true
+          update_at: true
         }
       }
     )
@@ -124,7 +124,7 @@ class UserService {
           verify: UserVerifyStatusType.Unverified
         },
         $currentDate: {
-          update: true
+          update_at: true
         }
       }
     )
@@ -142,7 +142,7 @@ class UserService {
           forgot_password_token
         },
         $currentDate: {
-          update: true
+          update_at: true
         }
       }
     )
@@ -156,10 +156,82 @@ class UserService {
           forgot_password_token: ''
         },
         $currentDate: {
-          update: true
+          update_at: true
         }
       }
     )
+  }
+  async changePassword({ user_id, new_password }: { user_id: string; new_password: string }) {
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          password: hashPassword(new_password)
+        },
+        $currentDate: {
+          update_at: true
+        }
+      }
+    )
+  }
+  async getMe({ user_id }: { user_id: string }) {
+    const user = await databaseService.users.findOne(
+      {
+        _id: new ObjectId(user_id)
+      },
+      {
+        projection: {
+          _id: 0,
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    if (user) return user
+  }
+  async updateMe({ user_id, payload }: { user_id: string; payload: UpdateMeRequestBody }) {
+    const payloadClone = {
+      ...payload,
+      date_of_birth: payload.date_of_birth ? new Date(payload.date_of_birth) : Date
+    } as UpdateMeRequestBody & { date_of_birth: Date }
+    const user = await databaseService.users.findOneAndUpdate(
+      {
+        _id: new ObjectId(user_id)
+      },
+      {
+        $set: {
+          ...payloadClone
+        },
+        $currentDate: {
+          update_at: true
+        }
+      },
+      {
+        projection: {
+          _id: 0,
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        },
+        returnDocument: 'after'
+      }
+    )
+    if (user) return user
+  }
+  async getProfile({ username }: { username: string }) {
+    const user = await databaseService.users.findOne(
+      { username },
+      {
+        projection: {
+          _id: 0,
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    if (user) return user
   }
 }
 

@@ -2,11 +2,14 @@ import { Request, Response, NextFunction } from 'express'
 import { ObjectId } from 'mongodb'
 import { ParamsDictionary } from 'express-serve-static-core'
 import {
+  ChangePasswordRequestBody,
   EmailVerifyRequestBody,
   ForgotPasswordRequestBody,
   LoginRequestBody,
+  ProfileParams,
   RegisterRequestBody,
   ResetPasswordRequestBody,
+  UpdateMeRequestBody,
   VerifyForgotPasswordRequestBody
 } from '~/models/requests/user.request'
 import userService from '~/services/user.service'
@@ -130,4 +133,41 @@ export const resetPasswordController = async (
   return res.json({
     message: 'Reset password successfully'
   })
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, any, ChangePasswordRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization
+  const { new_password } = req.body
+  await userService.changePassword({ user_id, new_password })
+
+  return res.json({
+    message: 'Change password successfully'
+  })
+}
+export const meController = async (req: Request, res: Response, next: NextFunction) => {
+  const { user_id } = req.decoded_authorization
+  const result = await userService.getMe({ user_id })
+  return res.json(result)
+}
+export const updateMeController = async (
+  req: Request<ParamsDictionary, any, UpdateMeRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization
+  const payload = req.body as UpdateMeRequestBody
+  const result = await userService.updateMe({ user_id, payload })
+  return res.json({
+    message: 'Update profile successfully',
+    result
+  })
+}
+export const profileController = async (req: Request<ProfileParams>, res: Response, next: NextFunction) => {
+  const { username } = req.params
+  const result = await userService.getProfile({ username })
+  return res.json(result)
 }

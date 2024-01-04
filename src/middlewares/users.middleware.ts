@@ -3,10 +3,11 @@ import userService from '~/services/user.service'
 import { hashPassword } from '~/utils/crypto'
 import { check, checkSchema } from 'express-validator'
 import { validate } from '~/utils/support'
-import { HTTP_STATUS, MESSAGES } from '~/utils/constant'
+import { HTTP_STATUS, MESSAGES, UserVerifyStatusType } from '~/utils/constant'
 import { ErrorStatus } from '~/models/error-status'
 import { verifyToken } from '~/utils/jwt'
 import { ObjectId } from 'mongodb'
+import { Request, Response, NextFunction } from 'express'
 
 export const accessTokenValidator = validate(
   checkSchema(
@@ -296,6 +297,118 @@ export const resetPasswordValidator = validate(
             req.decoded_forgot_password_token = decoded_forgot_password_token
           }
         }
+      }
+    },
+    ['body']
+  )
+)
+export const verifyEmailValidator = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { verify } = req.decoded_authorization
+    if (verify !== UserVerifyStatusType.Verified) {
+      throw new ErrorStatus({ message: MESSAGES.USER_NOT_VERIFIED, status: HTTP_STATUS.FORBIDDEN })
+    }
+    next()
+  } catch (err) {
+    next(err)
+  }
+}
+export const changePasswordValidator = validate(
+  checkSchema(
+    {
+      old_password: {
+        notEmpty: { errorMessage: MESSAGES.OLDPASSWORD_IS_REQUIRED },
+        custom: {
+          options: async (value, { req }) => {
+            const { user_id } = req.decoded_authorization
+
+            const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+            console.log('user', user)
+            if (!user) throw new ErrorStatus({ message: MESSAGES.USER_NOT_FOUND, status: HTTP_STATUS.NOT_FOUND })
+            if (hashPassword(value) !== user?.password) {
+              throw new Error(MESSAGES.PASSWORD_IS_INCORRECT)
+            }
+            return true
+          }
+        }
+      },
+      new_password: {
+        notEmpty: {
+          errorMessage: MESSAGES.NEWPASSWORD_IS_REQUIRED
+        },
+        isLength: {
+          options: { min: 8, max: 250 },
+          errorMessage: MESSAGES.NEWPASSWORD_LENGTH
+        }
+      },
+      confirm_password: {
+        notEmpty: {
+          errorMessage: MESSAGES.CONFIRM_PASSWORD_IS_REQUIRED
+        },
+        isLength: {
+          options: { min: 8, max: 250 },
+          errorMessage: MESSAGES.CONFIRM_PASSWORD_LENGTH
+        },
+        custom: {
+          options: (value, { req }) => {
+            if (value !== req.body.new_password) {
+              throw new Error(MESSAGES.PASSWORD_CONFIRMPASSWORD_NOT_SAME)
+            }
+            return true
+          }
+        }
+      }
+    },
+    ['body']
+  )
+)
+
+export const updateMeValidator = validate(
+  checkSchema(
+    {
+      name: {
+        optional: true,
+        isString: { errorMessage: MESSAGES.NAME_MUST_BE_A_STRING },
+        isLength: { options: { min: 1, max: 250 } }
+      },
+      date_of_birth: {
+        optional: true,
+        isString: { errorMessage: MESSAGES.DATE_MUST_BE_A_STRING },
+        isISO8601: {
+          options: {
+            strict: true,
+            strictSeparator: true
+          }
+        }
+      },
+      bio: {
+        optional: true,
+        isString: { errorMessage: MESSAGES.BIO_MUST_BE_A_STRING },
+        isLength: { options: { min: 1, max: 250 } }
+      },
+      location: {
+        optional: true,
+        isString: { errorMessage: MESSAGES.LOCATION_MUST_BE_A_STRING },
+        isLength: { options: { min: 1, max: 250 } }
+      },
+      username: {
+        optional: true,
+        isString: { errorMessage: MESSAGES.USERNAME_MUST_BE_A_STRING },
+        isLength: { options: { min: 1, max: 250 } },
+        custom: {
+          options: async (value, { req }) => {
+            const { user_id } = req.decoded_authorization
+            const user = await databaseService.users.findOne({ username: value })
+            if (user_id !== user?._id.toString() && user) {
+              throw new Error(MESSAGES.USERNAME_ALREADY_EXISTS)
+            }
+            return true
+          }
+        }
+      },
+      avatar: {
+        optional: true,
+        isString: { errorMessage: MESSAGES.AVATAR_MUST_BE_A_STRING }
       }
     },
     ['body']
