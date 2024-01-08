@@ -16,5 +16,6 @@ usersRouter.patch(
   filterKeys<UpdateMeRequestBody>(['name', 'date_of_birth', 'bio', 'location', 'username', 'avatar']),
   updateMeController
 )
-usersRouter.get('/:username', requestHandler(profileController as any))
+usersRouter.get('/:username', requestHandler(profileController))
+usersRouter.post('/follow', accessTokenValidator, verifyEmailValidator)
 export default usersRouter

@@ -1,4 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb'
+import Follower from '~/models/schemas/follower.schema'
 import RefreshToken from '~/models/schemas/refresh-token.schema'
 import User from '~/models/schemas/user.schema'
 import '~/utils/dotenv'
@@ -25,6 +26,9 @@ class DatabaseService {
   }
   get refresh_tokens(): Collection<RefreshToken> {
     return this.db.collection(process.env.DB_COLLECTION_REFRESH_TOKENS as string)
+  }
+  get follers(): Collection<Follower> {
+    return this.db.collection(process.env.DB_COLLECTION_FOLLOWER as string)
   }
 }
 

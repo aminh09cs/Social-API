@@ -414,3 +414,4 @@ export const updateMeValidator = validate(
     ['body']
   )
 )
+export const followValidator = validate(checkSchema({}))

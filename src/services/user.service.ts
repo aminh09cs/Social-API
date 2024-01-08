@@ -1,11 +1,12 @@
 import { ObjectId } from 'mongodb'
-import { TokenType, UserVerifyStatusType } from 'src/utils/constant'
+import { HTTP_STATUS, TokenType, UserVerifyStatusType } from 'src/utils/constant'
 import { signToken } from 'src/utils/jwt'
 import { RegisterRequestBody, UpdateMeRequestBody } from '~/models/requests/user.request'
 import databaseService from './database.service'
 import User from '~/models/schemas/user.schema'
 import { hashPassword } from '~/utils/crypto'
 import RefreshToken from '~/models/schemas/refresh-token.schema'
+import { ErrorStatus } from '~/models/error-status'
 
 class UserService {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatusType }) {
@@ -232,6 +233,7 @@ class UserService {
       }
     )
     if (user) return user
+    throw new ErrorStatus({ message: 'User not found', status: HTTP_STATUS.NOT_FOUND })
   }
 }
 
